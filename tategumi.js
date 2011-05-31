@@ -200,7 +200,6 @@ pchVerArr[17] = ']';
 pchVerArr[18] = '【';
 pchVerArr[19] = '】';
 	function prohibiCh(str){
-		alert("call");
 		for(var i=0; i<pchVerArr.length; i++){
 			if(str==pchVerArr[i]){
 					return true;
