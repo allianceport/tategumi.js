@@ -93,7 +93,15 @@ var TGParagraph = function(selector,style,text){
 			}
 			else{
 				
-				//shift 'Yakumono' 
+				//kinsoku - oidashi
+				if((charNumL)%numGlypL ==0 && this.text.charAt(i+1)!=null){				
+					if(prohibiCh(this.text.charAt(i+1))){								
+						stringArr += '</div><div class="TGLine '+this.selector+'" style="float:right; '+paragraphStyle+'">';		
+						charNumL ++;												
+					}																
+				}
+				
+				//shift 'kutou-ten' 
 				if(this.text.charAt(i) =='、'||this.text.charAt(i) =='。'){
 					stringArr += '<div class="TGglyph"'+' style="'+glyphStyle+'"><span style="position:relative; top:'+yakumonoShiftVerical+'; left:'+yakumonoShiftHorizontal+';">'+glyphRotate(this.text.charAt(i))+'</span></div>';
 				}
@@ -113,6 +121,8 @@ var TGParagraph = function(selector,style,text){
 		return html;
 	}
 }
+
+//define -rotated 
 
 var horisontalGlyphs = new Array();
 horisontalGlyphs[0] = '（';
@@ -164,4 +174,39 @@ function glyphRotate(x){
 	if(temp =='') temp=x;
 	return temp;
 }
+
+
+//define -kinsoku
+
+var pchVerArr = new Array();
+pchVerArr[0] = '、';
+pchVerArr[1] = '。';
+pchVerArr[2] = '（';
+pchVerArr[3] = '）';
+pchVerArr[4] = '｛';
+pchVerArr[5] = '｝';
+pchVerArr[6] = '「';
+pchVerArr[7] = '」';
+pchVerArr[8] = '『';
+pchVerArr[9] = '』';
+pchVerArr[10] = 'ー';
+pchVerArr[11] = '…';
+pchVerArr[12] = '(';
+pchVerArr[13] = ')';
+pchVerArr[14] = '{';
+pchVerArr[15] = '}';
+pchVerArr[16] = '[';
+pchVerArr[17] = ']';
+pchVerArr[18] = '【';
+pchVerArr[19] = '】';
+	function prohibiCh(str){
+		alert("call");
+		for(var i=0; i<pchVerArr.length; i++){
+			if(str==pchVerArr[i]){
+					return true;
+					break;
+			}
+		}
+		return false;
+	}
 
