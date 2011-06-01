@@ -34,7 +34,7 @@ var Tategumibeta = function(element,styles){
 		for(var i=0; i<styles.length;i++){
 			this.styles[styles[i].selector] = styles[i].style;	
 		}
-		this.styles['.DEFAULT'] = {glyphSize:10,glyphsPerLine:20,lineMargin:20,glyphMargin:0,blockMargin:100};
+		this.styles['.DEFAULT'] = {glyphSize:10,glyphsPerLine:20,lineMargin:20,glyphMargin:0,blockMargin:100,kinsoku:true};
 	
 		//paragrps setup
 		for(i=0; i<this.paragrpElements.length; i++){
@@ -100,20 +100,24 @@ var TGParagraph = function(selector,style,text){
 			else{
 				
 				//kinsoku - oidashi
-				if((charNumL)%numGlypL ==0 && this.text.charAt(i+1)!=null){				
-					if(prohibiCh(this.text.charAt(i+1))){								
-						stringArr += '</div><div class="TGLine '+this.selector+'" style="float:right; '+paragraphStyle+'">';		
-						charNumL ++;												
-					}																
+				if(this.style.kinsoku){
+					if((charNumL)%numGlypL ==0 && this.text.charAt(i+1)!=null){				
+						if(prohibiCh(this.text.charAt(i+1))){								
+							stringArr += '</div><div class="TGLine '+this.selector+'" style="float:right; '+paragraphStyle+'">';		
+							charNumL ++;												
+						}																
+					}
 				}
 				
 				//shift 'kutou-ten' 
-				if(this.text.charAt(i) =='、'||this.text.charAt(i) =='。'){
+				
+				if(this.text.charAt(i) =='ã€'||this.text.charAt(i) =='ã€‚'){
 					stringArr += '<div class="TGglyph"'+' style="'+glyphStyle+'"><span style="position:relative; top:'+yakumonoShiftVerical+'; left:'+yakumonoShiftHorizontal+';">'+glyphRotate(this.text.charAt(i))+'</span></div>';
 				}
 				else{
 					stringArr += '<div class="TGglyph"'+' style="'+glyphStyle+'">'+glyphRotate(this.text.charAt(i))+'</div>';
 				}
+					
 				
 				if((charNumL)%numGlypL ==0){
 					stringArr += '</div><div class="TGLine '+this.selector+'" style="float:right; '+paragraphStyle+'">';
