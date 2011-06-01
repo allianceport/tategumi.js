@@ -10,10 +10,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 */
 
-
+(function(){
 var Tategumibeta = function(element,styles){
 
-	this.targetElement = document.getElementById(element);
+	this.targetElement = !element.tagName ? document.getElementById( element ) : element;
 	this.paragrpElements = this.targetElement.getElementsByTagName('p');
 	this.styles = new Array();	
 	this.paragraphs = new Array();
@@ -38,7 +38,7 @@ var Tategumibeta = function(element,styles){
 	
 		//paragrps setup
 		for(i=0; i<this.paragrpElements.length; i++){
-			var selector = this.paragrpElements[i].getAttribute('class');
+			var selector = this.paragrpElements[i].className;
 			if(selector == null || !this.styles['.'+selector]) selector = '.DEFAULT';
 			var style = this.styles['.'+selector];
 			if(this.paragrpElements[i].firstChild != null){
@@ -56,11 +56,12 @@ var Tategumibeta = function(element,styles){
 	this.init();
 
 
-}
+};
 
 var TGParagraph = function(selector,style,text){
 	
 	this.selector = selector;
+
 	this.style = {
 		glyphSize:		style.glyphSize,
 		glyphsPerLine:	style.glyphsPerLine,
@@ -124,7 +125,7 @@ var TGParagraph = function(selector,style,text){
 		
 		return html;
 	}
-}
+};
 
 //define -rotated 
 
@@ -215,3 +216,34 @@ pchVerArr[19] = '】';
 		return false;
 	}
 
+
+window.Tategumi = Tategumibeta;
+
+// A simple jQuery wrapper
+if ( window.jQuery ) {
+
+	$.Tategumi = {};
+	$.Tategumi.o = [];
+	$.Tategumi.op = {};
+	$.Tategumi.defaults = {
+		styles: []
+	};
+
+	$.fn.Tategumi = function( op ) {
+
+    	return this.each(
+        	function() {
+
+            	var s = this.serial = $.Tategumi.o.length;
+            	var o = $.extend( {}, $.Tategumi.defaults, op );
+            	$.Tategumi.o[s] = $.Tategumi.op = o;
+
+				Tategumibeta( this, o.styles );
+
+			}
+		);
+	};
+
+}
+
+})();
