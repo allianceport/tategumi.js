@@ -10,23 +10,26 @@
         	var tategumi = new Tategumibeta('target',[		//target element IDを指定
         		{	selector:'.midashi',
         			style:{	glyphSize:30,		//級数（px）
-        					glyphsPerLine:32,	//行文字数（個）
+        					glyphsPerLine:15,	//行文字数（個）
         					lineMargin:18,		//行間（px）
-        					glyphMargin:0		//字間（px）
+        					glyphMargin:0,		//字間（px）
+        					blockMargin:0		//段間（px）
         			}
         		},
         		{	selector:'.honmon',
         			style:{	glyphSize:16,		//級数（px）
         					glyphsPerLine:32,	//行文字数（個）
         					lineMargin:18,		//行間（px）
-        					glyphMargin:0		//字間（px）
+        					glyphMargin:0,		//字間（px）
+        					blockMargin:100		//段間（px）
         			}
         		},
         		{	selector:'.caption',
         			style:{	glyphSize:13,		//級数（px）
         					glyphsPerLine:40,	//行文字数（個）
         					lineMargin:10,		//行間（px）
-        					glyphMargin:0		//字間（px）
+        					glyphMargin:0,		//字間（px）
+        					blockMargin:0		//段間（px）
         			}
         		}
         	]);

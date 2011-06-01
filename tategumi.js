@@ -34,12 +34,12 @@ var Tategumibeta = function(element,styles){
 		for(var i=0; i<styles.length;i++){
 			this.styles[styles[i].selector] = styles[i].style;	
 		}
-		this.styles['.DEFAULT'] = {glyphSize:10,glyphsPerLine:20,lineMargin:20,glyphMargin:0};
+		this.styles['.DEFAULT'] = {glyphSize:10,glyphsPerLine:20,lineMargin:20,glyphMargin:0,blockMargin:100};
 	
 		//paragrps setup
 		for(i=0; i<this.paragrpElements.length; i++){
 			var selector = this.paragrpElements[i].getAttribute('class');
-			if(selector == null || !this.styles['.'+selector]) selector = 'DEFAULT';
+			if(selector == null || !this.styles['.'+selector]) selector = '.DEFAULT';
 			var style = this.styles['.'+selector];
 			if(this.paragrpElements[i].firstChild != null){
 				var text = this.paragrpElements[i].firstChild.nodeValue
@@ -66,12 +66,16 @@ var TGParagraph = function(selector,style,text){
 		glyphsPerLine:	style.glyphsPerLine,
 		glyphMargin:	style.glyphMargin,
 		lineMargin:		style.lineMargin,
+		blockMargin:	style.blockMargin
 	}
 	this.text = text;
-	
 	this.applyStyle = function(){
 		
-		var paragraphStyle = 'margin-left: '+this.style.lineMargin + 'px;'+' width: '+this.style.glyphSize+'px; ';
+		var paragraphStyle = 'margin-left: '+this.style.lineMargin + 'px;'
+							+' width: '+this.style.glyphSize+'px; '
+							+' height: '+eval(this.style.glyphSize*this.style.glyphsPerLine)+'px; '
+							+'margin-bottom: '
+							+this.style.blockMargin + 'px;';
 		var html ='<div class="TGLine '+this.selector+'" style="float:right; '+paragraphStyle+'">';
 		var stringArr ='';
 		var numGlypL = this.style.glyphsPerLine;
@@ -161,6 +165,8 @@ horisontalGlyphs[34] = '【';
 horisontalGlyphs[35] = '︵';
 horisontalGlyphs[36] = '】';
 horisontalGlyphs[37] = '︶';
+horisontalGlyphs[38] = '―';
+horisontalGlyphs[39] = '︱';
 
 
 function glyphRotate(x){
