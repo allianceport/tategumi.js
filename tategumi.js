@@ -111,7 +111,7 @@ var TGParagraph = function(selector,style,text){
 				
 				//shift 'kutou-ten' 
 				
-				if(this.text.charAt(i) =='ã€'||this.text.charAt(i) =='ã€‚'){
+				if(this.text.charAt(i) =='、'||this.text.charAt(i) =='。'){
 					stringArr += '<div class="TGglyph"'+' style="'+glyphStyle+'"><span style="position:relative; top:'+yakumonoShiftVerical+'; left:'+yakumonoShiftHorizontal+';">'+glyphRotate(this.text.charAt(i))+'</span></div>';
 				}
 				else{
