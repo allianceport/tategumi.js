@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>tategumi beta</title>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js" charset="utf-8"></script>
+		<script type="text/javascript" src="tategumi.js" charset="utf-8"></script>
+		<script type="text/javascript" language="javascript">
+        
+        $(function(){
+        	$('#target').Tategumi({
+        		styles: [		//target element IDを指定
+        		{	selector:'.midashi',
+        			style:{	glyphSize:30,		//級数（px）
+        					glyphsPerLine:15,	//行文字数（個）
+        					lineMargin:18,		//行間（px）
+        					glyphMargin:0,		//字間（px）
+        					blockMargin:0		//段間（px）
+        			}
+        		},
+        		{	selector:'.honmon',
+        			style:{	glyphSize:16,		//級数（px）
+        					glyphsPerLine:32,	//行文字数（個）
+        					lineMargin:18,		//行間（px）
+        					glyphMargin:0,		//字間（px）
+        					blockMargin:100		//段間（px）
+        			}
+        		},
+        		{	selector:'.caption',
+        			style:{	glyphSize:13,		//級数（px）
+        					glyphsPerLine:40,	//行文字数（個）
+        					lineMargin:10,		//行間（px）
+        					glyphMargin:0,		//字間（px）
+        					blockMargin:0		//段間（px）
+        			}
+        		}
+        	]});
+        });
+        </script>
+        
+        <style>
+        	
+			.honmon,.caption{font-family:'HiraMinProN-W3',"Hiragino Mincho Pro","ヒラギノ明朝 Pro", "ヒラギノ明朝 Pro W3", "ＭＳ 明朝", sans-serif;}
+			.midashi{font-family:'HiraMinProN-W6',"Hiragino Mincho Pro","ヒラギノ明朝 Pro", "ヒラギノ明朝 Pro W6", "ＭＳ 明朝", sans-serif;}
+        </style>
+        
+    </head>
+    <body>
+        <h1>縦組サンプル</h1>
+        <div id="target">
+        <p class="midashi">山路を登りながら、こう考えた。</p>
+		<p class="honmon">智に働けば角が立つ。情に棹させば流される。意地を通せば窮屈だ。とかくに人の世は住みにくい。</p>
+		<p class="honmon">住みにくさが高じると、安い所へ引き越したくなる。どこへ越しても住みにくいと悟った時、詩が生れて、画が出来る。</p>
+		<p class="honmon">人の世を作ったものは神でもなければ鬼でもない。やはり向う三軒両隣りにちらちらするただの人である。ただの人が作った人の世が住みにくいからとて、越す国はあるまい。あれば人でなしの国へ行くばかりだ。人でなしの国は人の世よりもなお住みにくかろう。</p>
+		<p class="honmon">越す事のならぬ世が住みにくければ、住みにくい所をどれほどか、寛容て、束の間の命を、束の間でも住みよくせねばならぬ。ここに詩人という天職が出来て、ここに画家という使命が降る。あらゆる芸術の士は人の世を長閑にし、人の心を豊かにするが故に尊とい。</p>
+		<p class="honmon">住みにくき世から、住みにくき煩いを引き抜いて、ありがたい世界をまのあたりに写すのが詩である、画である。あるは音楽と彫刻である。こまかに云えば写さないでもよい。ただまのあたりに見れば、そこに詩も生き、歌も湧く。着想を紙に落さぬとも※鏘の音は胸裏に起る。</p>
+		<p class="honmon"></p>
+		<p class="caption">底本：「夏目漱石全集3」ちくま文庫、筑摩書房</p> 
+　　　	<p class="caption">1987（昭和62）年12月1日第1刷発行</p>
+	</div>
+    </body>
+</html>
