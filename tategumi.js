@@ -67,7 +67,8 @@ var TGParagraph = function(selector,style,text){
 		glyphsPerLine:	style.glyphsPerLine,
 		glyphMargin:	style.glyphMargin,
 		lineMargin:		style.lineMargin,
-		blockMargin:	style.blockMargin
+		blockMargin:	style.blockMargin,
+		kinsoku:		style.kinsoku
 	}
 	this.text = text;
 	this.applyStyle = function(){
