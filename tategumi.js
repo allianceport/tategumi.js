@@ -39,7 +39,7 @@ var Tategumibeta = function(element,styles){
 		//paragrps setup
 		for(i=0; i<this.paragrpElements.length; i++){
 			var selector = this.paragrpElements[i].className;
-			if(selector == null || !this.styles['.'+selector]) selector = '.DEFAULT';
+			if(selector == null || !this.styles['.'+selector]) selector = 'DEFAULT';
 			var style = this.styles['.'+selector];
 			if(this.paragrpElements[i].firstChild != null){
 				var text = this.paragrpElements[i].firstChild.nodeValue
@@ -59,7 +59,7 @@ var Tategumibeta = function(element,styles){
 };
 
 var TGParagraph = function(selector,style,text){
-	
+
 	this.selector = selector;
 
 	this.style = {
@@ -105,7 +105,7 @@ var TGParagraph = function(selector,style,text){
 						if(prohibiCh(this.text.charAt(i+1))){								
 							stringArr += '</div><div class="TGLine '+this.selector+'" style="float:right; '+paragraphStyle+'">';		
 							charNumL ++;												
-						}																
+						}															
 					}
 				}
 				
