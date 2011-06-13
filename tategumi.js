@@ -11,55 +11,132 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 (function(){
-var Tategumibeta = function(element,styles){
 
-	this.targetElement = !element.tagName ? document.getElementById( element ) : element;
-	this.paragrpElements = this.targetElement.getElementsByTagName('p');
-	this.styles = new Array();	
-	this.paragraphs = new Array();
-	
-	this.layout = function(){
-		
-		var tempHtml ='';
-		
-		for(i=0; i<this.paragraphs.length; i++){
-			tempHtml+= this.paragraphs[i].applyStyle();	
+/*
+	Cross-browser dynamic CSS creation based on the version from the SWFobject code
+	http://code.google.com/p/swfobject/source/browse/trunk/swfobject/src/swfobject.js
+    Based on Bobby van der Sluis' solution: http://www.bobbyvandersluis.com/articles/dynamicCSS.php
+    Released under the same terms: MIT License <http://www.opensource.org/licenses/mit-license.php>
+*/ 
+var createCSS = function() {
+	var doc = document,
+    	p = navigator.platform.toLowerCase(),
+        u = navigator.userAgent.toLowerCase(),
+        ua = {
+			ie: !+"\v1",
+			win: p ? /win/.test(p) : /win/.test(u),
+			mac: p ? /mac/.test(p) : /mac/.test(u)
+        };
+    var dynamicStylesheet;
+    return function( sel, decl, media, newStyle ) {
+        if ( ua.ie && ua.mac ) {
+            return;
+        }
+        var m = ( media && typeof media == "string" ) ? media : "screen";
+        if ( newStyle ) {
+            dynamicStylesheet = null;
+            dynamicStylesheetMedia = null;
+        }
+        if ( !dynamicStylesheet || dynamicStylesheetMedia != m ) {
+ 			// create dynamic stylesheet + get a global reference to it
+	        var h = document.getElementsByTagName("head")[0] || false;
+    	    if ( !h ) {
+        	    // to also support badly authored HTML
+            	// pages that lack a head element
+	            return;
+    	    }
+			var s = document.createElement("style");
+			s.setAttribute("type", "text/css");
+			s.setAttribute("media", m);
+			dynamicStylesheet = h.appendChild(s);
+			if ( ua.ie && ua.win && ( typeof doc.styleSheets != "undefined" ) && ( doc.styleSheets.length > 0 ) ) {
+				dynamicStylesheet = doc.styleSheets[ doc.styleSheets.length - 1 ];
+			}
+			dynamicStylesheetMedia = m;
 		}
-		this.targetElement.innerHTML= tempHtml;
+		// add style rule
+		if ( ua.ie && ua.win ) {
+			if ( dynamicStylesheet && typeof dynamicStylesheet.addRule == "object" ) {
+				dynamicStylesheet.addRule(sel, decl);
+			}
+		}
+		else {
+			if ( dynamicStylesheet ) {
+				dynamicStylesheet.appendChild( doc.createTextNode( sel + " {" + decl + "}" ) );
+			}
+		}
+	};
+}();
+
+var tategumi = {};
+tategumi.css = function() {
+	var selectors = [];
+	return {
+		has: function( selector ) {
+			return selectors.join('').indexOf( selector );
+		},
+		add: function( selector, properties ) {
+			selectors.push( selector );
+			createCSS( selector, properties );
+		}
+	};
+}();
+
+tategumi.init = function( element, styles){
+
+	var targetElement = !element.tagName ? document.getElementById( element ) : element,
+		children = targetElement.childNodes;
+	var paragraphs = new Array();
+	
+	var layout = function(){
+		var html = [];
+		for( var i=0; i<paragraphs.length; i++) {
+			html.push( paragraphs[i].applyStyle()  );
+		}
+		targetElement.innerHTML= html.join('');
+	}
+	createCSS( '.TGLine', 'display:block;float:right;word-break:break-all;word-wrap:break-word;', 'screen', true );
+	createCSS( '.TGLine span', 'display:block;position:relative;' );
+	if ( targetElement.id ) {
+		tategumi.css.add( '#' + targetElement.id, 'overflow:hidden;width:' + ( targetElement.offsetWidth - 20 ) + 'px;padding: 0 10px;' );
 	}
 	
-	this.init = function(){
+	// styles setup
+	for ( var i=0; i<styles.length; i++ ) {
+		styles[styles[i].selector] = styles[i].style;	
+	}
+	styles['.DEFAULT'] = {glyphSize:10,glyphsPerLine:20,lineMargin:20,glyphMargin:0,blockMargin:100,kinsoku:true};
 	
-		// styles setup
-		for(var i=0; i<styles.length;i++){
-			this.styles[styles[i].selector] = styles[i].style;	
-		}
-		this.styles['.DEFAULT'] = {glyphSize:10,glyphsPerLine:20,lineMargin:20,glyphMargin:0,blockMargin:100,kinsoku:true};
-	
-		//paragrps setup
-		for(i=0; i<this.paragrpElements.length; i++){
-			var selector = this.paragrpElements[i].className;
-			if(selector == null || !this.styles['.'+selector]) selector = 'DEFAULT';
-			var style = this.styles['.'+selector];
-			if(this.paragrpElements[i].firstChild != null){
-				var text = this.paragrpElements[i].firstChild.nodeValue
+	//paragrps setup
+	for (var i=0; i<children.length; i++ ) {
+		var child = children[ i ];
+		if ( child && child.nodeType == 1 ) {
+			if ( child.firstChild != null ){
+				var text = child.firstChild.nodeValue;
 			}
 			else{
 				var text = '　';
 			}
-			this.paragraphs.push(new TGParagraph(selector,style,text));
+			var selector = [ child.id || false, child.className || false ];
+			if ( selector[ 0 ] && styles[ '#' + selector[ 0 ] ] ) {
+				paragraphs.push( new tategumi.element( child.tagName.toLowerCase(), selector[ 0 ], styles[ '#' + selector[ 0 ] ], text ) );
+			}
+			else if ( selector[ 1 ] && styles[ '.' + selector[ 1 ] ] ) {
+				paragraphs.push( new tategumi.element( child.tagName.toLowerCase(), selector[ 1 ], styles[ '.' + selector[ 1 ] ], text ) );			
+			}
+			else {
+				paragraphs.push( new tategumi.element( child.tagName.toLowerCase(), 'DEFAULT', '.DEFAULT', text ) );
+			}
 		}
-		
-		this.layout();
 	}
-	
-	this.init();
 
+	return {
+		apply: layout
+	};
 
 };
 
-var TGParagraph = function(selector,style,text){
-
+tategumi.element = function( tagName, selector, style, text ) {
 	this.selector = selector;
 
 	this.style = {
@@ -71,30 +148,36 @@ var TGParagraph = function(selector,style,text){
 		kinsoku:		style.kinsoku
 	}
 	this.text = text;
+
 	this.applyStyle = function(){
-		
-		var paragraphStyle = 'margin-left: '+this.style.lineMargin + 'px;'
-							+' width: '+this.style.glyphSize+'px; '
-							+' height: '+eval(this.style.glyphSize*this.style.glyphsPerLine)+'px; '
-							+'margin-bottom: '
-							+this.style.blockMargin + 'px;';
-		var html ='<div class="TGLine '+this.selector+'" style="float:right; '+paragraphStyle+'">';
+
+		var css = [],
+			cssSelector = 'TGLine-' + this.selector.replace( '.', 'class-' ).replace( '#', 'id-' );
+
+		if ( tategumi.css.has( cssSelector ) == -1 ) {
+			tategumi.css.add( '.' + cssSelector,
+				'overflow:visible;'
+				+ 'margin: 0 0 0 ' + this.style.lineMargin + 'px;'
+				+ 'width:' + this.style.glyphSize + 'px;'
+				+ 'height:' + ( parseInt( this.style.glyphSize, 10 ) * parseInt( this.style.glyphsPerLine, 10 ) ) +'px; '
+				+ 'line-height:' + this.style.glyphSize + 'px;'
+				+ 'margin-bottom:' + this.style.blockMargin + 'px;'
+				+ 'font-size:' + this.style.glyphSize + 'px;'
+				+ 'letter-spacing: 1px;'
+				+ 'text-align:center;'
+			);
+		}
+		var html = '<' + tagName + ' class="TGLine ' + cssSelector + '">';
 		var stringArr ='';
 		var numGlypL = this.style.glyphsPerLine;
 		var charNumL =1;
-		var glyphStyle = 'font-size: '+this.style.glyphSize+'px; '
-					  +	'line-height: '+this.style.glyphSize+'px; '
-					  +	'width: '+this.style.glyphSize+'px; '
-					  + 'height: '+this.style.glyphSize+'px; '
-					  + 'margin: 0 0 '+this.style.glyphMargin+'px 0;'
-					  + 'text-align:inherit; vertical-align: middle;';
 		
-		var yakumonoShiftVerical = -1*this.style.glyphSize*3/5+'px';
-		var yakumonoShiftHorizontal = this.style.glyphSize*2/3+'px';
+		var yakumonoShiftVerical = Math.floor( -1 * this.style.glyphSize * 3/5 );
+		var yakumonoShiftHorizontal = Math.floor( this.style.glyphSize * 2/3 );
 		
 		for(var i = 0 ; i < this.text.length; i++ ){
 			if(this.text.charAt(i) =='\n'){
-				html += '</div><div class="TGLine '+this.selector+'" style="float:right; '+paragraphStyle+'">';
+				html += '</' + tagName + '><' + tagName + ' class="TGLine ' + cssSelector + '" style="float:right; '+paragraphStyle+'">';
 				charNumL = 1;
 			}
 			else{
@@ -103,7 +186,7 @@ var TGParagraph = function(selector,style,text){
 				if(this.style.kinsoku){
 					if((charNumL)%numGlypL ==0 && this.text.charAt(i+1)!=null){				
 						if(prohibiCh(this.text.charAt(i+1))){								
-							stringArr += '</div><div class="TGLine '+this.selector+'" style="float:right; '+paragraphStyle+'">';		
+							stringArr += '</' + tagName + '><' + tagName + ' class="TGLine ' + cssSelector + '" style="float:right; '+paragraphStyle+'">';		
 							charNumL ++;												
 						}															
 					}
@@ -112,22 +195,20 @@ var TGParagraph = function(selector,style,text){
 				//shift 'kutou-ten' 
 				
 				if(this.text.charAt(i) =='、'||this.text.charAt(i) =='。'){
-					stringArr += '<div class="TGglyph"'+' style="'+glyphStyle+'"><span style="position:relative; top:'+yakumonoShiftVerical+'; left:'+yakumonoShiftHorizontal+';">'+glyphRotate(this.text.charAt(i))+'</span></div>';
+					stringArr += '<span style="margin:'+yakumonoShiftVerical+'px 0 ' + ( -1 * yakumonoShiftVerical / 2 ) + 'px ' + yakumonoShiftHorizontal + 'px;">'+glyphRotate(this.text.charAt(i))+'</span>';
 				}
 				else{
-					stringArr += '<div class="TGglyph"'+' style="'+glyphStyle+'">'+glyphRotate(this.text.charAt(i))+'</div>';
+					stringArr += glyphRotate(this.text.charAt(i));
 				}
-					
 				
 				if((charNumL)%numGlypL ==0){
-					stringArr += '</div><div class="TGLine '+this.selector+'" style="float:right; '+paragraphStyle+'">';
+					stringArr += '</' + tagName + '><' + tagName + ' class="TGLine ' + cssSelector +'">';
 				}
 				charNumL ++;
 			}
 		}
 		
-		html += stringArr+ '</div>';
-		
+		html += stringArr+ '</' + tagName + '>';
 		return html;
 	}
 };
@@ -221,8 +302,7 @@ pchVerArr[19] = '】';
 		return false;
 	}
 
-
-window.Tategumi = Tategumibeta;
+window.Tategumi = tategumi.init;
 
 // A simple jQuery wrapper
 if ( window.jQuery ) {
@@ -243,7 +323,10 @@ if ( window.jQuery ) {
             	var o = $.extend( {}, $.Tategumi.defaults, op );
             	$.Tategumi.o[s] = $.Tategumi.op = o;
 
-				Tategumibeta( this, o.styles );
+				var tategumi = new Tategumi( this, o.styles );
+				if ( o.apply ) {
+					tategumi.apply();
+				}
 
 			}
 		);
