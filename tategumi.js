@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2011 Alliance Port, LLC (www.allianeport.jp)
+Copyright (c) 2011 Alliance Port, LLC (www.allianceport.jp)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -13,8 +13,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 (function(){
 
 /*
-	Cross-browser dynamic CSS creation based on the version from the SWFobject code
-	http://code.google.com/p/swfobject/source/browse/trunk/swfobject/src/swfobject.js
+    Cross-browser dynamic CSS creation based on the version from the SWFobject code
+    http://code.google.com/p/swfobject/source/browse/trunk/swfobject/src/swfobject.js
     Based on Bobby van der Sluis' solution: http://www.bobbyvandersluis.com/articles/dynamicCSS.php
     Released under the same terms: MIT License <http://www.opensource.org/licenses/mit-license.php>
 */ 
@@ -23,9 +23,9 @@ var createCSS = function() {
     	p = navigator.platform.toLowerCase(),
         u = navigator.userAgent.toLowerCase(),
         ua = {
-			ie: !+"\v1",
-			win: p ? /win/.test(p) : /win/.test(u),
-			mac: p ? /mac/.test(p) : /mac/.test(u)
+		ie: !+"\v1",
+		win: p ? /win/.test(p) : /win/.test(u),
+		mac: p ? /mac/.test(p) : /mac/.test(u)
         };
     var dynamicStylesheet;
     return function( sel, decl, media, newStyle ) {
@@ -96,7 +96,7 @@ tategumi.init = function( element, styles){
 		targetElement.innerHTML= html.join('');
 	}
 	createCSS( '.TGLine', 'display:block;float:right;word-break:break-all;word-wrap:break-word;', 'screen', true );
-	createCSS( '.TGLine span', 'display:block;position:relative;' );
+	createCSS( '.TGLine g', 'display:block;position:relative;' );
 	if ( targetElement.id ) {
 		tategumi.css.add( '#' + targetElement.id, 'overflow:hidden;width:' + ( targetElement.offsetWidth - 20 ) + 'px;padding: 0 10px;' );
 	}
@@ -105,7 +105,9 @@ tategumi.init = function( element, styles){
 	for ( var i=0; i<styles.length; i++ ) {
 		styles[styles[i].selector] = styles[i].style;	
 	}
-	styles['.DEFAULT'] = {glyphSize:10,glyphsPerLine:20,lineMargin:20,glyphMargin:0,blockMargin:100,kinsoku:true};
+	if ( !styles['.default'] ) {
+		styles['.default'] = {glyphSize:10,glyphsPerLine:20,lineMargin:20,glyphMargin:0,blockMargin:100,kinsoku:true};
+	}
 	
 	//paragrps setup
 	for (var i=0; i<children.length; i++ ) {
@@ -119,13 +121,13 @@ tategumi.init = function( element, styles){
 			}
 			var selector = [ child.id || false, child.className || false ];
 			if ( selector[ 0 ] && styles[ '#' + selector[ 0 ] ] ) {
-				paragraphs.push( new tategumi.element( child.tagName.toLowerCase(), selector[ 0 ], styles[ '#' + selector[ 0 ] ], text ) );
+				paragraphs.push( new tategumi.element( child.tagName.toLowerCase(), selector[ 0 ], styles[ '#' + selector[ 0 ] ], child ) );
 			}
 			else if ( selector[ 1 ] && styles[ '.' + selector[ 1 ] ] ) {
-				paragraphs.push( new tategumi.element( child.tagName.toLowerCase(), selector[ 1 ], styles[ '.' + selector[ 1 ] ], text ) );			
+				paragraphs.push( new tategumi.element( child.tagName.toLowerCase(), selector[ 1 ], styles[ '.' + selector[ 1 ] ], child ) );			
 			}
 			else {
-				paragraphs.push( new tategumi.element( child.tagName.toLowerCase(), 'DEFAULT', '.DEFAULT', text ) );
+				paragraphs.push( new tategumi.element( child.tagName.toLowerCase(), 'default', styles[ '.default'], child ) );
 			}
 		}
 	}
@@ -136,7 +138,8 @@ tategumi.init = function( element, styles){
 
 };
 
-tategumi.element = function( tagName, selector, style, text ) {
+tategumi.element = function( tagName, selector, style, element ) {
+
 	this.selector = selector;
 
 	this.style = {
@@ -147,7 +150,7 @@ tategumi.element = function( tagName, selector, style, text ) {
 		blockMargin:	style.blockMargin,
 		kinsoku:		style.kinsoku
 	}
-	this.text = text;
+
 
 	this.applyStyle = function(){
 
@@ -157,14 +160,19 @@ tategumi.element = function( tagName, selector, style, text ) {
 		if ( tategumi.css.has( cssSelector ) == -1 ) {
 			tategumi.css.add( '.' + cssSelector,
 				'overflow:visible;'
-				+ 'margin: 0 0 0 ' + this.style.lineMargin + 'px;'
+				+ 'margin: 0 0 ' + this.style.blockMargin + 'px ' + this.style.lineMargin + 'px;'
 				+ 'width:' + this.style.glyphSize + 'px;'
 				+ 'height:' + ( parseInt( this.style.glyphSize, 10 ) * parseInt( this.style.glyphsPerLine, 10 ) ) +'px; '
 				+ 'line-height:' + this.style.glyphSize + 'px;'
-				+ 'margin-bottom:' + this.style.blockMargin + 'px;'
 				+ 'font-size:' + this.style.glyphSize + 'px;'
-				+ 'letter-spacing: 1px;'
-				+ 'text-align:center;'
+				+ 'text-align: center;'
+			);
+			tategumi.css.add( '.' + cssSelector + ' g',
+				'margin: 0 0 ' + this.style.glyphMargin + 'px 0;'
+				+ 'width:' + this.style.glyphSize + 'px;'
+				+ 'height:' + this.style.glyphSize + 'px;'
+				+ 'line-height:' + this.style.glyphSize + 'px;'
+				+ 'font-size:' + this.style.glyphSize + 'px;'
 			);
 		}
 		var html = '<' + tagName + ' class="TGLine ' + cssSelector + '">';
@@ -175,8 +183,15 @@ tategumi.element = function( tagName, selector, style, text ) {
 		var yakumonoShiftVerical = Math.floor( -1 * this.style.glyphSize * 3/5 );
 		var yakumonoShiftHorizontal = Math.floor( this.style.glyphSize * 2/3 );
 		
-		for(var i = 0 ; i < this.text.length; i++ ){
-			if(this.text.charAt(i) =='\n'){
+		var text = ' ';
+		if ( !element.childNodes.length < 2 ) {
+			 text = element.firstChild ? element.firstChild.nodeValue : '　';
+		}
+		else {
+			
+		}
+		for(var i = 0 ; i < text.length; i++ ){
+			if ( text.charAt(i) == '\n' ){
 				html += '</' + tagName + '><' + tagName + ' class="TGLine ' + cssSelector + '" style="float:right; '+paragraphStyle+'">';
 				charNumL = 1;
 			}
@@ -194,11 +209,11 @@ tategumi.element = function( tagName, selector, style, text ) {
 				
 				//shift 'kutou-ten' 
 				
-				if(this.text.charAt(i) =='、'||this.text.charAt(i) =='。'){
-					stringArr += '<span style="margin:'+yakumonoShiftVerical+'px 0 ' + ( -1 * yakumonoShiftVerical / 2 ) + 'px ' + yakumonoShiftHorizontal + 'px;">'+glyphRotate(this.text.charAt(i))+'</span>';
+				if ( text.charAt(i) == '、' || text.charAt(i) == '。' ) {
+					stringArr += '<g style="margin:'+yakumonoShiftVerical+'px 0 ' + ( -1 * yakumonoShiftVerical / 2 ) + 'px ' + yakumonoShiftHorizontal + 'px;">' + glyphRotate( text.charAt(i) ) + '</g>';
 				}
 				else{
-					stringArr += glyphRotate(this.text.charAt(i));
+					stringArr += '<g>' + glyphRotate( text.charAt(i) ) + '</g>';
 				}
 				
 				if((charNumL)%numGlypL ==0){
