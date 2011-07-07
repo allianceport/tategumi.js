@@ -268,9 +268,17 @@ var tategumi = function( element, columnStyles ) {
             for ( var n = 0, children = node.childNodes; n <children.length; n++ ) {
                 var currentChild = children[ n ];
                 if ( currentChild.nodeType == 3 ) { // Text node
+                    if ( styles.kinsoku && isFirst ) {
+                        html.push( '<span></span>' );
+                        isFirst = false;
+                    }
                     addHTML( currentChild.nodeValue ? currentChild.nodeValue : '　', ( currentTagName == 'rt' ) ? true : false );
                 }
                 else if ( currentChild.nodeType == 1 ) { // Html Tag node
+                    if ( styles.kinsoku && isFirst ) {
+                        html.push( '<span></span>' );
+                        isFirst = false;
+                    }
                     var currentTagName = currentChild.tagName.toLowerCase();
                     activeTags.push( '<' + currentTagName + '>' );
                     html.push( '<' + currentTagName + ( currentChild.href ? ' href="' + currentChild.href + '"' : '' ) + '>' );
