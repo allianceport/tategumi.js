@@ -28,7 +28,7 @@ var createCSS = function() {
         if ( ua.ie && ua.mac ) {
             return;
         }
-        var m = ( media && typeof media == "string" ) ? media : "screen";
+        var m = ( media && typeof media == "string" ) ? media : "all";
         if ( newStyle ) {
             dynamicStylesheet = null;
             dynamicStylesheetMedia = null;
@@ -237,16 +237,12 @@ var tategumi = function( element, columnStyles ) {
                                 html.push( '</' + tagName + '><' + tagName + ' class="TGLine ' + cssSelector + '">' );        
                                 charNumL++;
                                 isFirst = false;
-                            }                                                            
-                        }
-                        if ( isFirst ) {
-                            html.push( '<span></span>' );
-                            isFirst = false;
+                            }                                                    
                         }
                     }
                     //shift 'kutou-ten'    
                     if ( text.charAt(i) == '、' || text.charAt(i) == '。' ) {
-                        html.push( '<span style="margin:'+yakumonoShiftVerical+'px 0 ' + ( -1 * yakumonoShiftVerical / 2 ) + 'px ' + yakumonoShiftHorizontal + 'px;">' + glyphRotate( text.charAt(i) ) + '</span>' );
+						html.push( '<span style="top:'+yakumonoShiftVerical+'px; left:' + yakumonoShiftHorizontal + 'px;">' + glyphRotate( text.charAt(i) ) + '</span>' );
                     }
                     else if ( rubyTop ) {
                         html.push( '<span style="top:' + rubyTop + 'px;">' + glyphRotate( text.charAt(i) ) + '</span>' );                        
@@ -268,9 +264,19 @@ var tategumi = function( element, columnStyles ) {
             for ( var n = 0, children = node.childNodes; n <children.length; n++ ) {
                 var currentChild = children[ n ];
                 if ( currentChild.nodeType == 3 ) { // Text node
+                    if ( styles.kinsoku && isFirst ) {
+                        html.push( '<span></span>' );
+                        isFirst = false;
+                        charNumL++;
+                    }
                     addHTML( currentChild.nodeValue ? currentChild.nodeValue : '　', ( currentTagName == 'rt' ) ? true : false );
                 }
                 else if ( currentChild.nodeType == 1 ) { // Html Tag node
+                    if ( styles.kinsoku && isFirst ) {
+                        html.push( '<span></span>' );
+                        isFirst = false;
+                        charNumL++;
+                    }
                     var currentTagName = currentChild.tagName.toLowerCase();
                     activeTags.push( '<' + currentTagName + '>' );
                     html.push( '<' + currentTagName + ( currentChild.href ? ' href="' + currentChild.href + '"' : '' ) + '>' );
@@ -305,7 +311,7 @@ var tategumi = function( element, columnStyles ) {
         'float:right;',
         'word-break:break-all;',
         'word-wrap:break-word;'
-        ].join(''), 'screen', true );
+        ].join(''), 'all', true );
     css.add( '.TGLine *', [
         'display:inline;',
         'position:relative;',
