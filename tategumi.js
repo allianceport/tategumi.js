@@ -67,271 +67,481 @@ var createCSS = function() {
 }();
 
 
-var tategumi = function( element, columnStyles ) {
+var tategumi = function( element, columnStyles, pager ) {
 
-    var css = function() {
-        var selectors = [];
+    var config = {
+		targetElement: !element.tagName ? document.getElementById( element ) : element,
+		viewport: {
+			size: {
+				width: 0,
+				height: 0
+			},
+			orientations: {
+				portrait: false,
+				landscape: false
+			}
+		}
+	};
+
+	var models = {}, views = {}, controllers = {};
+
+	models.inArray = function( ) {
+		if ( window.jQuery ) {
+			return jQuery.inArray;
+		}
+		else {
+            return function( value, array ) {
+				var idx = -1;
+				for ( var i = 0; i < array.length; i++ ) {
+	                if ( value == array[ i ] ) {
+						idx = i;
+						break;
+					}
+				}
+				return idx;
+			}
+		}
+	}();
+
+    models.viewport = {
+		getSize: function() {
+		    if ( typeof window.innerWidth != 'undefined') {
+				return {
+					width: window.innerWidth,
+				    height: window.innerHeight
+				};
+		    }
+		    else if ( typeof document.documentElement != 'undefined'
+		    && typeof document.documentElement.clientWidth != 'undefined'
+		    && document.documentElement.clientWidth != 0) {
+				return {
+					width: document.documentElement.clientWidth,
+					height: document.documentElement.clientHeight
+				};
+		    }
+		    else {
+				return {
+					width: document.getElementsByTagName('body')[0].clientWidth,
+				    height: document.getElementsByTagName('body')[0].clientHeight
+				};
+		    }
+		}
+    };
+
+    models.css = function() {
+        var selectors = [],
+            add = function( selector, properties ) {
+                selectors.push( selector );
+				var stringProperties = [];
+				for ( var p in properties ) {
+					stringProperties.push( p.replace( /([A-Z]{1})/, "-$1" ).toLowerCase() + ':' + properties[ p ] + ';' );
+				}
+                createCSS( selector, stringProperties.join('') );
+            },
+			addStyles = function( cssSelector, cssStyles ) {
+				add( cssSelector, cssStyles );
+			},
+            createStyles = function( cssSelector, styles ) {
+                add( '.' + cssSelector, {
+                    overflow: 'visible',
+                    position: 'relative', 
+                    margin: '0 0 ' + styles.blockMargin + 'px ' + styles.lineMargin + 'px',
+                    width: styles.glyphSize + 'px',
+                    height: ( parseInt( styles.glyphSize, 10 ) * parseInt( styles.glyphsPerLine, 10 ) ) + 'px',
+                    lineHeight: styles.glyphSize + 'px',
+                    fontSize: styles.glyphSize + 'px',
+                    textAlign: 'center'
+				} );
+                add( '.' + cssSelector + ' span', {
+                    margin: '0 0 ' + styles.glyphMargin + 'px 0',
+                    width: styles.glyphSize + 'px',
+                    height: styles.glyphSize + 'px',
+                    lineHeight: styles.glyphSize + 'px',
+                    fontSize: styles.glyphSize + 'px'
+				} );
+                add( '.' + cssSelector + ' rt', {
+                    display: 'inline',
+                    position: 'static'
+				} );
+                add( '.' + cssSelector + ' rt span', {
+                    position: 'absolute',
+                    top: '0px',
+                    left: styles.glyphSize + 'px',
+                    width: styles.rubySize + 'px',
+                    height: styles.rubySize + 'px',
+                    lineHeight: styles.rubySize + 'px',
+                    fontSize: styles.rubySize + 'px'
+				} );
+            };
+		// Create a new style style sheet
+		createCSS( '.TGLine', [
+			'display:block;',
+			'float:right;',
+			'word-break:break-all;',
+			'word-wrap:break-word;'
+		].join(''), 'all', true );
+		addStyles( '.TGLine *', {
+			display: 'inline',
+			position: 'relative',
+			textDecoration: 'none',
+			lineHeight: '1',
+			fontSize: '100%'
+		} );
+		addStyles( '.TGLine span, .TGLine ruby', {
+			display: 'block',
+			position: 'relative'
+		} );
+		if ( config.targetElement.id ) {
+			addStyles( '#' + config.targetElement.id, {
+				overflow: 'hidden',
+				width: ( config.targetElement.offsetWidth - 20 ) + 'px',
+				padding: '0 10px'
+			} );
+		}
         return {
             has: function( selector ) {
                 return selectors.join('').indexOf( selector );
             },
-            add: function( selector, properties ) {
-                selectors.push( selector );
-                createCSS( selector, properties.join('') );
-            }
+            createStyles: createStyles,
+			addStyles: addStyles
         };
     }();
 
-    var glyphRotate = function() {
-        var horisontalGlyphs = [
-            '（',
-            '︵',
-            '）',
-            '︶',
-            '｛',
-            '︷',
-            '｝',
-            '︸',
-            '「',
-            '﹁',
-            '」',
-            '﹂',
-            '『',
-            '﹃',
-            '』',
-            '﹄',
-            'ー',
-            '︱',
-            '…',
-            '︰',
-            '(',
-            '︵',
-            ')',
-            '︶',
-            '{',
-            '︷',
-            '}',
-            '︸',
-            '[',
-            '︵',
-            ']',
-            '︶',
-            '【',
-            '︵',
-            '】',
-            '︶',
-            '―',
-            '︱'
+    models.rotatedGlyph = function() {
+        var horizontalGlyphs = [
+			'（', '）', '｛', '｝', '「', '」', '『', '』', 'ー', '…', '(', ')', '{', '}', '[', ']', '【', '】', '―'
         ];
-        return function( x ) {
-            var temp = '';
-            for ( var i = 0; i < horisontalGlyphs.length; i++) {
-                if ( x == horisontalGlyphs[i] ) {
-                    temp = horisontalGlyphs[i+1];
-                    break;
-                }
-            }
-            if ( temp == '' ) temp = x;
-            return temp;
+		var verticalGlyphs = [
+			'︵', '︶', '︷', '︸', '﹁', '﹂', '﹃', '﹄', '︱', '︰', '︵', '︶', '︷', '︸', '︵', '︶', '︵', '︶', '︱'
+		];
+        return function( glyph ) {
+			var idx = models.inArray( glyph, horizontalGlyphs );
+			return ( idx > -1 ) ? verticalGlyphs[ idx ] : glyph;
         };
     }();
 
-    var prohibiCh = function() {
-        var pchVerArr = [
-            '、',
-            '。',
-            '（',
-            '）',
-            '｛',
-            '｝',
-            '「',
-            '」',
-            '『',
-            '』',
-            'ー',
-            '…',
-            '(',
-            ')',
-            '{',
-            '}',
-            '[',
-            ']',
-            '【',
-            '】'
+    models.prohibitedCharacters = function() {
+        var characters = [
+            '、', '。', '（', '）', '｛', '｝', '「', '」', '『', '』', 'ー', '…', '(', ')', '{', '}', '[', ']', '【', '】'
         ];
-        return function( str ) {
-            for ( var i = 0; i < pchVerArr.length; i++ ) {
-                if ( str == pchVerArr[i] ) {
-                    return true;
-                    break;
-                }
-            }
-            return false;
+        return function( character ) {
+			var idx = models.inArray( character, characters );
+			return ( idx > -1 ) ? true : false;
         };
     }();
 
-    var column = function( ops ) {
+
+	/* @namespace models
+	 * @Class column
+	 * @description model to manage a column
+ 	 */
+    models.column = function( ops ) {
 
         var element = ops.element,
             selector = ops.selector,
             styles = ops.styles;
     
-        var html = [];
-        var cssSelector = 'TGLine-' + selector.replace( '.', 'class-' ).replace( '#', 'id-' );
+        /*
+		 var html = [];
         var numGlypL = styles.glyphsPerLine;
         var charNumL = 1;
         var tagName = element.tagName.toLowerCase();
-            
+		*/   
         var yakumonoShiftVerical = Math.floor( -1 * styles.glyphSize * 3/5 );
         var yakumonoShiftHorizontal = Math.floor( styles.glyphSize * 2/3 );
-    
-        if ( css.has( cssSelector ) == -1 ) {
-            css.add( '.' + cssSelector, [
-                'overflow: visible;',
-                'position: relative;', 
-                'margin: 0 0 ' + styles.blockMargin + 'px ' + styles.lineMargin + 'px;',
-                'width:' + styles.glyphSize + 'px;',
-                'height:' + ( parseInt( styles.glyphSize, 10 ) * parseInt( styles.glyphsPerLine, 10 ) ) + 'px;',
-                'line-height:' + styles.glyphSize + 'px;',
-                'font-size:' + styles.glyphSize + 'px;',
-                'text-align: center;'
-            ] );
-            css.add( '.' + cssSelector + ' span', [
-                'margin: 0 0 ' + styles.glyphMargin + 'px 0;',
-                'width:' + styles.glyphSize + 'px;',
-                'height:' + styles.glyphSize + 'px;',
-                'line-height:' + styles.glyphSize + 'px;',
-                'font-size:' + styles.glyphSize + 'px;'
-            ] );
-            css.add( '.' + cssSelector + ' rt', [
-                'position: absolute;',
-                'top: 0px;',
-                'left:' + styles.glyphSize + 'px;'
-            ] );
-            css.add( '.' + cssSelector + ' rt span', [
-                'width:' + styles.rubySize + 'px;',
-                'height:' + styles.rubySize + 'px;',
-                'line-height:' + styles.rubySize + 'px;',
-                'font-size:' + styles.rubySize + 'px;'
-            ] );
+
+        var cssSelector = 'TGLine-' + selector.replace( '.', 'class-' ).replace( '#', 'id-' );
+        if ( models.css.has( cssSelector ) == -1 ) {
+            models.css.createStyles( cssSelector, styles );
         }
 
-        var activeTags = [],
-            isFirst = true;
-        var addHTML = function( text, skipCounter ) {
-            var rubyTop = false;
-            if ( skipCounter ) { // RT tag from ruby
-                var rubyTop = parseInt( styles.glyphSize, 10 ) - ( parseInt( styles.rubySize, 10 ) * text.length );
-                rubyTop = Math.ceil( rubyTop / 2 );
-            }
-            for ( var i = 0 ; i < text.length; i++ ) {
-                if ( text.charAt(i) == '\n' ) {
-                    html.push( '</' + tagName + '><' + tagName + ' class="TGLine ' + cssSelector + '">' );
-                    charNumL = 1;
-                }
-                else{
-                    //kinsoku - oidashi
-                    if ( styles.kinsoku ) {
-                        if ( (charNumL)%numGlypL == 0 && text.charAt(i+1) != null ) {    
-                            if ( prohibiCh( text.charAt(i+1) ) ) {                                
-                                html.push( '</' + tagName + '><' + tagName + ' class="TGLine ' + cssSelector + '">' );        
-                                charNumL++;
-                                isFirst = false;
-                            }                                                    
-                        }
+		var parser = function() {
+
+			var charCounter = 1,
+				charPerLines = styles.glyphsPerLine,
+				unclosed = 0,
+				lineTagName = element.tagName.toLowerCase();
+
+			var html = function() {
+				var source = []; // We stock in an html array
+				var activeTags = [];
+				return {
+					tagIsFirst: function( kinsoku ) {
+						var tagIsFirst = true;
+						return function() {
+		                    if ( kinsoku && tagIsFirst ) {
+		                        source.push( '<span>&nbsp;</span>' );
+		                        tagIsFirst = false;
+		                        charCounter++;
+		                    }
+						}
+					}( styles.kinsoku ),
+					add: function( str ) {
+						source.push( str );
+					},
+					open: function( node ) {
+						html.tagIsFirst();
+						var currentTagName = node.tagName.toLowerCase();
+						activeTags.push( '<' + currentTagName + '>' );
+						source.push( '<' + currentTagName );
+						var currentAttributes = node.attributes || [];
+						for ( var a = 0; a < currentAttributes.length; a++ ) {
+							var attr = currentAttributes[ a ];
+							if ( attr.name != "style" ) {
+								source.push( ' ' + attr.name + '="' + attr.value + '"' );
+							}
+						}
+						source.push( '>' );
+					},
+					close: function( closeMethod ) {
+						switch ( closeMethod || false ) {
+							case 'splitLine':
+								source.push( activeTags.reverse().join('').replace( '<', '</') + '</' + lineTagName + '><' + lineTagName + ' class="TGLine ' + cssSelector +'">' + activeTags.join('') );
+							break;
+							case 'line':
+								source.push( '</' + lineTagName + '><' + lineTagName + ' class="TGLine ' + cssSelector + '">' );
+							break;
+							default:
+								source.push( activeTags.pop().replace( '<', '</' ) );
+							break;
+						}
+					},
+					getSource: function() {
+						return source.join('');
+					}
+				};
+			}(  );
+
+
+			var rubyLength = 0;
+			var parseText = function( textOptions ) {
+
+				var extraCSS = false;
+				var text = textOptions.text;
+				var currentTagName = textOptions.tagName;
+
+				switch (  currentTagName ) {
+					case 'RUBY': case 'ruby':
+						rubyLength = text.length;
+					break;
+					case 'RT': case 'rt':
+						extraCSS = function( textLength, rubyLength, glyphSize, rubySize ) {
+							var rubyTop = ( glyphSize * rubyLength ) - ( rubySize * textLength );
+							rubyTop = Math.ceil( rubyTop / 2 );
+							return function( n ) {
+								return "top:" + ( rubyTop + n * rubySize ) + "px";
+							};
+						}( text.length, rubyLength, parseInt( styles.glyphSize, 10 ), parseInt( styles.rubySize, 10 ) );
+						rubyLength = 0;
+					break;
+				}
+
+				if ( unclosed > 0 ) {
+					unclosed++;
+					if ( unclosed > 2 ) {
+				        html.close( 'splitLine' );
+				        unclosed = 0;
+				    }
+				}
+
+	            for ( var i = 0 ; i < text.length; i++ ) {
+	                if ( text.charAt(i) == '\n' ) {
+	                    html.close( 'line' );
+	                    charCounter = 1;
+	                }
+	                else {
+	                    //kinsoku - oidashi
+	                    if ( styles.kinsoku ) {
+	                        if ( (charCounter)%charPerLines == 0 && text.charAt(i+1) != null ) {    
+	                           if ( models.prohibitedCharacters( text.charAt(i+1) ) ) {                                
+	                               html.close( 'line' );        
+	                               charCounter++;
+	                           }                                                    
+	                       }
+						}
                     }
                     //shift 'kutou-ten'    
-                    if ( text.charAt(i) == '、' || text.charAt(i) == '。' ) {
-						html.push( '<span style="top:'+yakumonoShiftVerical+'px; left:' + yakumonoShiftHorizontal + 'px;">' + glyphRotate( text.charAt(i) ) + '</span>' );
+                    if ( /(、|。)/.test( text.charAt(i) ) ) {
+						html.add( '<span style="top:'+yakumonoShiftVerical+'px; left:' + yakumonoShiftHorizontal + 'px;">' + models.rotatedGlyph( text.charAt(i) ) + '</span>' );
                     }
-                    else if ( rubyTop ) {
-                        html.push( '<span style="top:' + rubyTop + 'px;">' + glyphRotate( text.charAt(i) ) + '</span>' );                        
+                    else if ( extraCSS ) {
+                        html.add( '<span style="' + extraCSS( i ) + '">' + models.rotatedGlyph( text.charAt(i) ) + '</span>' );
                     }
-                    else{
-                        html.push( '<span>' + glyphRotate( text.charAt(i) ) + '</span>' );
+                    else {
+                        html.add( '<span>' + models.rotatedGlyph( text.charAt(i) ) + '</span>' );
                     }
-                    if ( (charNumL)%numGlypL == 0 ) {
-                        html.push( activeTags.reverse().join('').replace( '<', '</') + '</' + tagName + '><' + tagName + ' class="TGLine ' + cssSelector +'">' + activeTags.join('') );
-                    }
-                    if ( !skipCounter ) {
-                        charNumL ++;
+                    if (  currentTagName != "RT" ) {
+						if ( (charCounter)%charPerLines == 0 ) {
+	                    	if ( currentTagName != "RUBY" ) {
+	                        	html.close( 'splitLine' );
+	                       	}
+	                       	else {
+								unclosed = 1;
+	                       	}
+						}
+						charCounter++;
                     }
                 }
-            }
-        };
-        var parseNode = function( node ) {
-            var currentTagName = node.tagName.toLowerCase();
-            for ( var n = 0, children = node.childNodes; n <children.length; n++ ) {
-                var currentChild = children[ n ];
-                if ( currentChild.nodeType == 3 ) { // Text node
-                    if ( styles.kinsoku && isFirst ) {
-                        html.push( '<span></span>' );
-                        isFirst = false;
-                        charNumL++;
-                    }
-                    addHTML( currentChild.nodeValue ? currentChild.nodeValue : '　', ( currentTagName == 'rt' ) ? true : false );
-                }
-                else if ( currentChild.nodeType == 1 ) { // Html Tag node
-                    if ( styles.kinsoku && isFirst ) {
-                        html.push( '<span></span>' );
-                        isFirst = false;
-                        charNumL++;
-                    }
-                    var currentTagName = currentChild.tagName.toLowerCase();
-                    activeTags.push( '<' + currentTagName + '>' );
-                    html.push( '<' + currentTagName + ( currentChild.href ? ' href="' + currentChild.href + '"' : '' ) + '>' );
-                    parseNode( currentChild );
-                    html.push( activeTags.pop().replace( '<', '</' ) );
-                }
-                else {
-                    // Skipping other nodes
-                }
-            }
-        };
-    
+            };
+
+			var parseNode = function( node ) {
+				var currentTagName = node.tagName.toUpperCase();
+				for ( var n = 0, children = node.childNodes; n < children.length; n++ ) {
+		            var currentChild = children[ n ];
+					switch ( currentChild.nodeType ) {
+			            case 3: // Text node
+						    html.tagIsFirst();
+			                parseText({
+			                	tagName: currentTagName,
+			                	text: currentChild.nodeValue ? currentChild.nodeValue : '　'
+			                });
+			            break;
+						case 1: // Html Tag node
+							html.open( currentChild );
+							parseNode( currentChild );
+							html.close();
+						break;
+					}
+		        }
+		    };
+
+			return {
+					do: function() {
+						html.add(  '<' + lineTagName + ' class="TGLine ' + cssSelector + '">' );
+						parseNode( ops.element );
+						html.add( '</' + lineTagName + '>' );
+						return html.getSource();
+					}
+			};
+
+		};
+
+		var parser = new parser();
+
         return {
             applyStyle: function() {
-                html.push(  '<' + tagName + ' class="TGLine ' + cssSelector + '">' );
-                parseNode( ops.element );
-                html.push( '</' + tagName + '>' );
-                return html.join('');
+				return parser.do();
             }
         };
 
     };
 
+	controllers.pager = function() {
+		var pages = 0,
+			touchPositions = {
+				start: {
+					x: 0,
+					y: 0
+				},
+				end: {
+					x: 0,
+					y: 0
+				}
+			},
+			touchStamp = {
+				start: 0,
+				end: 0
+			},
+			viewPosition = {
+				x: 0,
+				y: 0
+			};
+		var touchEvents = {};
+		var $view = document.getElementById("TGWrapper");
+		$view.style.left = "0px";
+		$view.style.top = "0px";
+		$view.style.position = "relative";
+		if ( !document.ontouchstart ) {
+			touchEvents = {
+				down: "mousedown",
+				up: "mouseup",
+				move: "mousemove"
+			};
+		}
+		else {
+			touchEvents = {
+				down: "touchstart",
+				up: "touchend",
+				move: "touchmove"
+			};
+		}
+		var MathAbs = Math.abs;
+		var touchDown = function( event ) {
+			var touch = event.touches ? event.touches[0] : event;
+			touchStamp.start = new Date().getTime();
+			touchPositions.start.x = touch.clientX;
+			touchPositions.start.y = touch.clientY;
+			$view = document.getElementById("TGWrapper");
+			viewPosition = {
+				x: parseInt( $view.style.left, 10 ),
+				y: parseInt( $view.style.top, 10 ),
+				min: -1 * ( $view.offsetHeight - config.viewport.size.height ),
+				max: 0
+			};
+			document.addEventListener( touchEvents.move, touchMove, false );
+			document.addEventListener( touchEvents.up, touchUp, false );
+		};
+		var touchMove = function( event ) {
+			var touch = event.touches ? event.touches[0] : event;
+			var newPosition = viewPosition.y + ( touch.clientY - touchPositions.start.y );
+			if ( newPosition >= viewPosition.min && newPosition <= viewPosition.max ) {
+				$view.style.top = newPosition + 'px';
+			}
+		};
+		var touchUp = function( event ) {
+			var touch = event.touches ? event.touches[0] : event;
+			touchStamp.end = new Date().getTime();
+			touchPositions.end.x = touch.clientX;
+			touchPositions.end.y = touch.clientY;
+			var touchDistance = { // Pixels
+				x: MathAbs( MathAbs( touchPositions.start.x ) - MathAbs( touchPositions.end.x ) ),
+				y: MathAbs( MathAbs( touchPositions.start.y ) - MathAbs( touchPositions.end.y ) )
+			};
+			var touchDuration = touchStamp.end - touchStamp.start; // Milliseconds
+			document.removeEventListener( touchEvents.move, touchMove, false );
+			document.removeEventListener( touchEvents.up, touchUp, false );
+		};
+		document.addEventListener( touchEvents.down, touchDown, false );
+	};
+
+	controllers.init = function() {
+		if ( !document.addEventListener ) {
+			document.addEventListener = function( type, listener, useCapture ) {
+				document.attachEvent( 'on' + type, listener );
+			};
+		}
+		if ( !document.removeEventListener ) {
+			document.removeEventListener = function( type, listener, useCapture ) {
+				document.detachEvent( 'on' + type, listener );
+			};
+		}
+		var viewportSize = function() {
+			var viewportSize = models.viewport.getSize();
+			config.viewport = {
+				size: {
+					width: viewportSize.width,
+					height: viewportSize.height
+				},
+				orientations: {
+					landscape: viewportSize.width > viewportSize.height ? true : false,
+					portrait: viewportSize.height > viewportSize.width ? true : false
+				}
+			};
+		};
+		window.onresize = viewportSize;
+		viewportSize(); // Trigger
+		controllers.pager();
+	};
+
     /*
      * From here initialize
      */
-    var targetElement = !element.tagName ? document.getElementById( element ) : element;
 
-    // Create a new style style sheet
-    createCSS( '.TGLine', [
-        'display:block;',
-        'float:right;',
-        'word-break:break-all;',
-        'word-wrap:break-word;'
-        ].join(''), 'all', true );
-    css.add( '.TGLine *', [
-        'display:inline;',
-        'position:relative;',
-        'text-decoration:none;'
-    ]);
-    css.add( '.TGLine span, .TGLine ruby', [
-        'display:block;',
-        'position:relative;'
-    ]);
-    if ( targetElement.id ) {
-        css.add( '#' + targetElement.id, [
-            'overflow:hidden;',
-            'width:' + ( targetElement.offsetWidth - 20 ) + 'px;',
-            'padding: 0 10px;'
-        ]);
-    }
-        
     // Setup the element styles
-    for ( var i = 0; i < columnStyles.length; i++ ) {
-        columnStyles[ columnStyles[i].selector ] = columnStyles[i].style;    
+	var userColumnStyles = columnStyles;
+	columnStyles = [];
+    for ( var i = 0; i < userColumnStyles.length; i++ ) {
+        columnStyles[ userColumnStyles[i].selector ] = userColumnStyles[i].style;    
     }
     if ( !columnStyles['.default'] ) {
         columnStyles['.default'] = {
@@ -343,29 +553,41 @@ var tategumi = function( element, columnStyles ) {
             kinsoku: true
         };
     }
+
+	// Setup pager if need be
+	if ( !pager ) {}
+	else {
+		models.viewport.size = models.viewport.getSize();
+		for ( var s in columnStyles ) {
+			if ( columnStyles.hasOwnProperty( s ) ) {
+				columnStyles[ s ].glyphsPerLine = Math.floor( models.viewport.size.height / columnStyles[ s ].glyphSize );
+			}
+		}
+	
+	}
         
     // Setup columns
     var columns = [];
-    for ( var i = 0, children = targetElement.childNodes; i < children.length; i++ ) {
+    for ( var i = 0, children = config.targetElement.childNodes; i < children.length; i++ ) {
         var child = children[ i ];
         if ( child && child.nodeType == 1 ) {
             var childSelector = [ child.id || false, child.className || false ];
             if ( childSelector[ 0 ] && columnStyles[ '#' + childSelector[ 0 ] ] ) {
-                columns.push( column({
+                columns.push( models.column({
                     element: child,
                     selector: childSelector[ 0 ],
                     styles: columnStyles[ '#' + childSelector[ 0 ] ]
                 }) );
             }
             else if ( childSelector[ 1 ] && columnStyles[ '.' + childSelector[ 1 ] ] ) {
-                columns.push( column({
+                columns.push( models.column({
                     element: child,
                     selector: childSelector[ 1 ],
                     styles: columnStyles[ '.' + childSelector[ 1 ] ]
                 }) );
             }
             else {
-                columns.push( column({
+                columns.push( models.column({
                     element: child,
                     selector: 'default',
                     styles: columnStyles[ '.default' ]
@@ -379,8 +601,15 @@ var tategumi = function( element, columnStyles ) {
            var html = [];
             for( var i = 0; i < columns.length; i++ ) {
                 html.push( columns[i].applyStyle()  );
-            }
-            targetElement.innerHTML= html.join('');
+            } 
+            var clone = config.targetElement.cloneNode( false );
+            clone.innerHTML = html.join('');
+            var wrapper = document.createElement('div');
+            wrapper.id = 'TGWrapper';
+            wrapper.appendChild( clone );
+            var targetElementParent =config. targetElement.parentNode;
+            targetElementParent.replaceChild( wrapper, config.targetElement );
+			controllers.init();
         }
     }
     
@@ -406,7 +635,7 @@ if ( window.jQuery ) {
                 var o = $.extend( {}, $.Tategumi.defaults, op );
                 $.Tategumi.o[s] = $.Tategumi.op = o;
 
-                var tategumi = new Tategumi( this, o.styles );
+                var tategumi = new Tategumi( this, o.styles, o.pager );
                 if ( o.apply ) {
                     tategumi.apply();
                 }
